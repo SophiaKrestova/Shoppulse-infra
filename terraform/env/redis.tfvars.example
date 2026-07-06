@@ -1,0 +1,4 @@
+# cp redis.tfvars.example redis.tfvars
+
+sku_name = ""
+capacity = 0

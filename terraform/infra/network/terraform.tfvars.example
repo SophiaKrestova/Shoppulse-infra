@@ -1,0 +1,6 @@
+# Shared values: env/common.tfvars (via common.auto.tfvars symlink)
+
+# Stack override (optional): cp terraform.tfvars.example terraform.tfvars
+
+# vnet_address_space = "10.0.0.0/16"
+

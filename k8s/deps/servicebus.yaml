@@ -1,0 +1,174 @@
+# Same stack as docker-compose: SQL Edge + Azure Service Bus emulator
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: servicebus-emulator-config
+  namespace: shoppulse
+data:
+  Config.json: |
+    {
+      "UserConfig": {
+        "Namespaces": [
+          {
+            "Name": "sbemulatorns",
+            "Queues": [
+              {
+                "Name": "sales-events",
+                "Properties": {
+                  "DeadLetteringOnMessageExpiration": false,
+                  "DefaultMessageTimeToLive": "PT1H",
+                  "DuplicateDetectionHistoryTimeWindow": "PT20S",
+                  "ForwardDeadLetteredMessagesTo": "",
+                  "ForwardTo": "",
+                  "LockDuration": "PT1M",
+                  "MaxDeliveryCount": 3,
+                  "RequiresDuplicateDetection": false,
+                  "RequiresSession": false
+                }
+              }
+            ],
+            "Topics": []
+          }
+        ],
+        "LoggingConfig": {
+          "Type": "Console"
+        }
+      }
+    }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sqledge
+  namespace: shoppulse
+  labels:
+    app: sqledge
+spec:
+  type: ClusterIP
+  selector:
+    app: sqledge
+  ports:
+    - name: mssql
+      port: 1433
+      targetPort: mssql
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sqledge
+  namespace: shoppulse
+  labels:
+    app: sqledge
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sqledge
+  template:
+    metadata:
+      labels:
+        app: sqledge
+    spec:
+      containers:
+        - name: sqledge
+          image: mcr.microsoft.com/azure-sql-edge:latest
+          ports:
+            - name: mssql
+              containerPort: 1433
+          env:
+            - name: ACCEPT_EULA
+              value: "Y"
+            - name: MSSQL_SA_PASSWORD
+              value: "Localdev@12345"
+          readinessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - "bash -c '</dev/tcp/127.0.0.1/1433' 2>/dev/null"
+            initialDelaySeconds: 20
+            periodSeconds: 10
+            failureThreshold: 30
+          resources:
+            requests:
+              cpu: 100m
+              memory: 512Mi
+            limits:
+              cpu: 500m
+              memory: 1536Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: servicebus-emulator
+  namespace: shoppulse
+  labels:
+    app: servicebus-emulator
+spec:
+  type: ClusterIP
+  selector:
+    app: servicebus-emulator
+  ports:
+    - name: amqp
+      port: 5672
+      targetPort: amqp
+    - name: health
+      port: 8080
+      targetPort: health
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: servicebus-emulator
+  namespace: shoppulse
+  labels:
+    app: servicebus-emulator
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: servicebus-emulator
+  template:
+    metadata:
+      labels:
+        app: servicebus-emulator
+    spec:
+      containers:
+        - name: servicebus-emulator
+          image: mcr.microsoft.com/azure-messaging/servicebus-emulator:latest
+          ports:
+            - name: amqp
+              containerPort: 5672
+            - name: health
+              containerPort: 8080
+          env:
+            - name: ACCEPT_EULA
+              value: "Y"
+            - name: SQL_SERVER
+              value: sqledge
+            - name: MSSQL_SA_PASSWORD
+              value: "Localdev@12345"
+          volumeMounts:
+            - name: config
+              mountPath: /ServiceBus_Emulator/ConfigFiles/Config.json
+              subPath: Config.json
+          readinessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - "curl -sf http://127.0.0.1:8080/health"
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            failureThreshold: 24
+          resources:
+            requests:
+              cpu: 50m
+              memory: 256Mi
+            limits:
+              cpu: 250m
+              memory: 512Mi
+      volumes:
+        - name: config
+          configMap:
+            name: servicebus-emulator-config

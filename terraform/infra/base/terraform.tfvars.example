@@ -1,0 +1,2 @@
+# Shared values: env/common.tfvars (via common.auto.tfvars symlink)
+# Setup: bash ../../scripts/link-env.sh

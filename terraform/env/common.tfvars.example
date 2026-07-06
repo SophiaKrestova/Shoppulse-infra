@@ -1,0 +1,6 @@
+# cp common.tfvars.example common.tfvars
+
+subscription_id         = ""
+resource_group_location = ""
+project_name            = ""
+environment             = ""

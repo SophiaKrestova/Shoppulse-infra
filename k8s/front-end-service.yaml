@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: front-end
+  namespace: shoppulse
+  labels:
+    app: front-end
+    app.kubernetes.io/part-of: shoppulse
+spec:
+  type: ClusterIP
+  selector:
+    app: front-end
+  ports:
+    - name: http
+      port: 80
+      targetPort: http

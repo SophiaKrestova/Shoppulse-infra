@@ -1,0 +1,7 @@
+# cp keyvault.tfvars.example keyvault.tfvars
+
+key_vault_name = ""
+
+secrets = {
+  "pgsql-password" = ""
+}

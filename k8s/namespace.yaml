@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: shoppulse
+  labels:
+    app.kubernetes.io/part-of: shoppulse
+    azure.workload.identity/use: "true"

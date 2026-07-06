@@ -1,0 +1,4 @@
+# cp acr.tfvars.example acr.tfvars
+
+acr_name = ""
+sku      = ""
