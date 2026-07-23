@@ -1,5 +1,2 @@
-# cp servicebus.tfvars.example servicebus.tfvars
-
-sku        = ""
-capacity   = 0
-queue_name = ""
+sku      = "Premium"
+capacity = 1

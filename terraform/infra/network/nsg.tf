@@ -143,7 +143,7 @@ module "nsg_pe" {
       access                     = "Allow"
       protocol                   = "Tcp"
       source_port_range          = "*"
-      destination_port_ranges    = ["5432", "6379", "5671", "5672", "443"]
+      destination_port_ranges    = ["10000", "5671", "5672", "443"]
       source_address_prefix      = "10.0.4.0/22"
       destination_address_prefix = "*"
     }
@@ -164,5 +164,45 @@ module "nsg_pe" {
     project     = var.project_name
     environment = var.environment
     tier        = "private-endpoints"
+  }
+}
+
+module "nsg_postgres" {
+  source  = "Azure/avm-res-network-networksecuritygroup/azurerm"
+  version = "0.5.1"
+
+  name                = "${lower(var.project_name)}-postgres-nsg"
+  location            = local.location
+  resource_group_name = local.resource_group_name
+
+  security_rules = {
+    allow_aks_to_postgres = {
+      name                       = "AllowAksToPostgres"
+      priority                   = 100
+      direction                  = "Inbound"
+      access                     = "Allow"
+      protocol                   = "Tcp"
+      source_port_range          = "*"
+      destination_port_range     = "5432"
+      source_address_prefix      = "10.0.4.0/22"
+      destination_address_prefix = "*"
+    }
+    deny_internet_inbound = {
+      name                       = "DenyInternetInbound"
+      priority                   = 4096
+      direction                  = "Inbound"
+      access                     = "Deny"
+      protocol                   = "*"
+      source_port_range          = "*"
+      destination_port_range     = "*"
+      source_address_prefix      = "Internet"
+      destination_address_prefix = "*"
+    }
+  }
+
+  tags = {
+    project     = var.project_name
+    environment = var.environment
+    tier        = "postgres"
   }
 }

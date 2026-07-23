@@ -6,6 +6,37 @@ locals {
   pe_subnet_id        = data.terraform_remote_state.network.outputs.subnet_ids["pe"].resource_id
   vnet_id             = data.terraform_remote_state.network.outputs.virtual_network_id
   workload_principal  = data.terraform_remote_state.identity.outputs.principal_id
+
+  secrets_value = {
+    "postgres-password"            = random_password.postgres.result
+    "redis-password"               = random_password.redis.result
+    "servicebus-connection-string" = random_password.servicebus.result
+  }
+}
+
+resource "random_password" "postgres" {
+  length           = 32
+  special          = true
+  min_lower        = 1
+  min_upper        = 1
+  min_numeric      = 1
+  min_special      = 1
+  override_special = "!#%*()-_=+[]{}"
+}
+
+resource "random_password" "redis" {
+  length           = 32
+  special          = true
+  min_lower        = 1
+  min_upper        = 1
+  min_numeric      = 1
+  min_special      = 1
+  override_special = "!#%*()-_=+[]{}"
+}
+
+resource "random_password" "servicebus" {
+  length  = 48
+  special = false
 }
 
 resource "azurerm_private_dns_zone" "keyvault" {
@@ -29,9 +60,10 @@ module "keyvault" {
   resource_group_name = local.resource_group_name
   tenant_id           = data.azurerm_client_config.current.tenant_id
 
+  sku_name                       = "standard"
   legacy_access_policies_enabled = false
   public_network_access_enabled  = false
-  purge_protection_enabled       = false
+  purge_protection_enabled       = true
   soft_delete_retention_days     = 7
 
   private_endpoints = {
@@ -41,18 +73,28 @@ module "keyvault" {
     }
   }
 
-  # keys() only — values stay in secrets_value (sensitive cannot be for_each keys)
   secrets = {
-    for name in nonsensitive(keys(var.secrets)) : name => { name = name }
+    "postgres-password"            = { name = "postgres-password" }
+    "redis-password"               = { name = "redis-password" }
+    "servicebus-connection-string" = { name = "servicebus-connection-string" }
   }
 
-  secrets_value = var.secrets
+  secrets_value = local.secrets_value
 
   role_assignments = {
+    deployer_secrets_officer = {
+      role_definition_id_or_name = "Key Vault Secrets Officer"
+      principal_id               = data.azurerm_client_config.current.object_id
+    }
     workload_secrets_user = {
       role_definition_id_or_name = "Key Vault Secrets User"
       principal_id               = local.workload_principal
     }
+  }
+
+  wait_for_rbac_before_secret_operations = {
+    create  = "30s"
+    destroy = "0s"
   }
 
   tags = {

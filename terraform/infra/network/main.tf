@@ -29,5 +29,18 @@ module "virtual_network" {
         id = module.nsg_pe.resource_id
       }
     }
+    postgres = {
+      name             = "postgres-subnet"
+      address_prefixes = ["10.0.9.0/24"]
+      network_security_group = {
+        id = module.nsg_postgres.resource_id
+      }
+      delegations = [{
+        name = "pg-flexible-servers"
+        service_delegation = {
+          name = "Microsoft.DBforPostgreSQL/flexibleServers"
+        }
+      }]
+    }
   }
 }

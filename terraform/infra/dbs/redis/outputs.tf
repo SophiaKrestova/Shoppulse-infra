@@ -1,7 +1,8 @@
 output "redis_id" {
-  value = module.redis.resource_id
+  value = azurerm_managed_redis.this.id
 }
 
 output "redis_hostname" {
-  value = module.redis.resource.hostname
+  value     = azurerm_managed_redis.this.hostname
+  sensitive = true
 }

@@ -3,12 +3,6 @@ variable "administrator_login" {
   description = "PostgreSQL admin login — set in env/postgresql.tfvars"
 }
 
-variable "administrator_password" {
-  type        = string
-  description = "PostgreSQL admin password — set in env/postgresql.tfvars"
-  sensitive   = true
-}
-
 variable "server_version" {
   type        = string
   description = "PostgreSQL major version"
@@ -17,8 +11,8 @@ variable "server_version" {
 
 variable "sku_name" {
   type        = string
-  description = "Burstable SKU for study/dev; bump to GP_Standard_D2s_v3 for prod"
-  default     = "B_Standard_B1ms"
+  description = "Compute SKU — GP_Standard_D2s_v3 for task"
+  default     = "GP_Standard_D2s_v3"
 }
 
 variable "storage_mb" {

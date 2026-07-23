@@ -1,4 +1,1 @@
-# cp postgresql.tfvars.example postgresql.tfvars
-
-administrator_login    = ""
-administrator_password = ""
+administrator_login = "psqladmin"

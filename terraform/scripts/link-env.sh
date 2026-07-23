@@ -68,6 +68,9 @@ for stack in postgresql redis servicebus; do
   echo "linked dbs/${stack}: remote_state"
 done
 
+link "${ROOT}/infra/dbs/postgresql/_remote.keyvault.tf" "../../../shared/remote_state/keyvault.deep.tf"
+echo "linked dbs/postgresql: keyvault"
+
 # remote state — security (infra/security/<stack>/)
 for stack in identity keyvault acr; do
   dir="${ROOT}/infra/security/${stack}"

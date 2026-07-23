@@ -6,38 +6,20 @@ This was a **time-boxed study exercise**, not a production deployment. AKS and a
 
 ---
 
-## What was deployed
+## Data-layer task (Jul 2026) — done, then torn down
 
-### Terraform (Azure)
+Terraform for **ACR + Key Vault + Redis + PostgreSQL** was applied and verified, then the resource group was deleted to stop student-subscription spend. Details (including Redis retirement → Managed Redis): [`terraform/README.md`](terraform/README.md).
 
-| Stack | Path | Status |
+**No public app URL for that task** — AKS / App Gateway / website were out of scope. Old demo `http://4.225.28.41/` was from an earlier AKS experiment and is not current.
+
+Local UI: `cd repo/shoppulse && docker compose up --build` → http://localhost:3000
+
+### Earlier AKS experiment (historical)
+
+| Stack | Path | Notes |
 |-------|------|--------|
-| Resource group | `terraform/infra/base` | Applied |
-| VNet, subnets, NSGs | `terraform/infra/network` | Applied |
-| User-assigned managed identity | `terraform/infra/security/identity` | Applied |
-| Azure Container Registry | `terraform/infra/security/acr` | Applied |
-| AKS + Application Gateway Ingress Controller (AGIC) | `terraform/infra/aks` | Applied |
-
-### Not applied (code exists, out of scope for this iteration)
-
-| Stack | Path |
-|-------|------|
-| Azure Database for PostgreSQL | `terraform/infra/dbs/postgresql` |
-| Azure Cache for Redis | `terraform/infra/dbs/redis` |
-| Azure Service Bus | `terraform/infra/dbs/servicebus` |
-| Key Vault | `terraform/infra/security/keyvault` |
-
-### Kubernetes
-
-| Workload | Notes |
-|----------|--------|
-| `api`, `front-end` | Running; images from ACR |
-| `postgres`, `redis` | In-cluster (same idea as local `docker-compose`), not Azure PaaS |
-| `worker` | **Not deployed** — single B2s node ran out of CPU |
-| Ingress | `azure-application-gateway` → public App Gateway IP |
-
-**Live demo URL (at time of deployment):** `http://4.225.28.41/`  
-(App Gateway public IP — may change if the cluster is recreated.)
+| AKS + AGIC | `terraform/infra/aks` | Was applied in an earlier iteration; not part of the data-layer hand-in |
+| App demo URL | — | Was `http://4.225.28.41/` while that cluster existed |
 
 ### Demo screenshots
 

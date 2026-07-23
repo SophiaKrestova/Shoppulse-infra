@@ -6,7 +6,7 @@ locals {
 }
 
 resource "azurerm_private_dns_zone" "redis" {
-  name                = "privatelink.redis.cache.windows.net"
+  name                = "privatelink.redis.azure.net"
   resource_group_name = local.resource_group_name
 }
 
@@ -17,28 +17,42 @@ resource "azurerm_private_dns_zone_virtual_network_link" "redis" {
   virtual_network_id    = local.vnet_id
 }
 
-module "redis" {
-  source  = "Azure/avm-res-cache-redis/azurerm"
-  version = "0.4.0"
-
+resource "azurerm_managed_redis" "this" {
   name                = "${lower(var.project_name)}-redis"
-  location            = local.location
   resource_group_name = local.resource_group_name
+  location            = local.location
 
-  sku_name = var.sku_name
-  capacity = var.capacity
+  sku_name                  = var.sku_name
+  high_availability_enabled = var.high_availability_enabled
+  public_network_access     = "Disabled"
 
-  public_network_access_enabled = false
-
-  private_endpoints = {
-    primary = {
-      subnet_resource_id            = local.pe_subnet_id
-      private_dns_zone_resource_ids = [azurerm_private_dns_zone.redis.id]
-    }
+  default_database {
+    clustering_policy = "EnterpriseCluster"
+    eviction_policy   = "AllKeysLRU"
   }
 
-  redis_configuration = {
-    maxmemory_policy = "allkeys-lru"
+  tags = {
+    project     = var.project_name
+    environment = var.environment
+  }
+}
+
+resource "azurerm_private_endpoint" "redis" {
+  name                = "pe-${lower(var.project_name)}-redis"
+  location            = local.location
+  resource_group_name = local.resource_group_name
+  subnet_id           = local.pe_subnet_id
+
+  private_service_connection {
+    name                           = "pse-${lower(var.project_name)}-redis"
+    private_connection_resource_id = azurerm_managed_redis.this.id
+    is_manual_connection           = false
+    subresource_names              = ["redisEnterprise"]
+  }
+
+  private_dns_zone_group {
+    name                 = "default"
+    private_dns_zone_ids = [azurerm_private_dns_zone.redis.id]
   }
 
   tags = {

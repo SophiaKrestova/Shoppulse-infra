@@ -26,8 +26,8 @@ module "acr" {
   resource_group_name = local.resource_group_name
 
   sku                           = var.sku
-  admin_enabled                 = true
-  public_network_access_enabled = true
+  admin_enabled                 = false
+  public_network_access_enabled = false
   zone_redundancy_enabled       = false
 
   private_endpoints = {

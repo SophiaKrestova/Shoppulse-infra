@@ -18,8 +18,9 @@ output "resource_group_id" {
 output "nsg_ids" {
   description = "Network Security Group IDs per tier"
   value = {
-    appgw = module.nsg_appgw.resource_id
-    aks   = module.nsg_aks.resource_id
-    pe    = module.nsg_pe.resource_id
+    appgw    = module.nsg_appgw.resource_id
+    aks      = module.nsg_aks.resource_id
+    pe       = module.nsg_pe.resource_id
+    postgres = module.nsg_postgres.resource_id
   }
 }

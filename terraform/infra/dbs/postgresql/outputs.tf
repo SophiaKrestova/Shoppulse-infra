@@ -13,3 +13,7 @@ output "database_name" {
 output "administrator_login" {
   value = var.administrator_login
 }
+
+output "delegated_subnet_id" {
+  value = local.postgres_subnet_id
+}

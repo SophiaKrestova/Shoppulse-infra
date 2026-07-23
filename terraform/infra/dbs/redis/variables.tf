@@ -1,11 +1,11 @@
 variable "sku_name" {
   type        = string
-  description = "Basic | Standard | Premium"
-  default     = "Basic"
+  description = "Azure Managed Redis SKU (e.g. Balanced_B0)"
+  default     = "Balanced_B0"
 }
 
-variable "capacity" {
-  type        = number
-  description = "Cache size (0 for Basic)"
-  default     = 0
+variable "high_availability_enabled" {
+  type        = bool
+  description = "HA; Balanced_B0 does not support HA"
+  default     = false
 }

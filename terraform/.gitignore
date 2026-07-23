@@ -16,3 +16,4 @@ override.tf.json
 .env.*
 !.env.example
 secrets/
+!*.tfvars.example

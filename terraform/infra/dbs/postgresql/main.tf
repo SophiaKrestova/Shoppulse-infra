@@ -1,8 +1,9 @@
 locals {
-  resource_group_name = data.terraform_remote_state.base.outputs.resource_group_name
-  location            = data.terraform_remote_state.base.outputs.resource_group_location
-  pe_subnet_id        = data.terraform_remote_state.network.outputs.subnet_ids["pe"].resource_id
-  vnet_id             = data.terraform_remote_state.network.outputs.virtual_network_id
+  resource_group_name    = data.terraform_remote_state.base.outputs.resource_group_name
+  location               = data.terraform_remote_state.base.outputs.resource_group_location
+  vnet_id                = data.terraform_remote_state.network.outputs.virtual_network_id
+  postgres_subnet_id     = data.terraform_remote_state.network.outputs.subnet_ids["postgres"].resource_id
+  administrator_password = data.terraform_remote_state.keyvault.outputs.postgres_password
 }
 
 resource "azurerm_private_dns_zone" "postgresql" {
@@ -26,22 +27,19 @@ module "postgresql" {
   resource_group_name = local.resource_group_name
 
   administrator_login    = var.administrator_login
-  administrator_password = var.administrator_password
+  administrator_password = local.administrator_password
 
   server_version = var.server_version
   sku_name       = var.sku_name
   storage_mb     = var.storage_mb
   zone           = 1
 
+  delegated_subnet_id           = local.postgres_subnet_id
+  private_dns_zone_id           = azurerm_private_dns_zone.postgresql.id
   public_network_access_enabled = false
+  backup_retention_days         = 7
+  geo_redundant_backup_enabled  = false
   high_availability             = null
-
-  private_endpoints = {
-    primary = {
-      subnet_resource_id            = local.pe_subnet_id
-      private_dns_zone_resource_ids = [azurerm_private_dns_zone.postgresql.id]
-    }
-  }
 
   databases = {
     app = {
