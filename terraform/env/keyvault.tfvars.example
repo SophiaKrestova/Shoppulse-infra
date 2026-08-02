@@ -2,6 +2,5 @@
 
 key_vault_name = ""
 
-secrets = {
-  "pgsql-password" = ""
-}
+# Secret values are generated in infra/security/keyvault/secrets.tf
+# (postgres-password, redis-password, servicebus-connection-string)

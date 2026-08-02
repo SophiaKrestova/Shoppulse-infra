@@ -29,9 +29,10 @@ module "keyvault" {
   resource_group_name = local.resource_group_name
   tenant_id           = data.azurerm_client_config.current.tenant_id
 
+  sku_name                       = "standard"
   legacy_access_policies_enabled = false
   public_network_access_enabled  = false
-  purge_protection_enabled       = false
+  purge_protection_enabled       = true
   soft_delete_retention_days     = 7
 
   private_endpoints = {
@@ -43,12 +44,18 @@ module "keyvault" {
 
   # keys() only — values stay in secrets_value (sensitive cannot be for_each keys)
   secrets = {
-    for name in nonsensitive(keys(var.secrets)) : name => { name = name }
+    for name in nonsensitive(keys(local.secrets)) : name => { name = name }
   }
 
-  secrets_value = var.secrets
+  secrets_value = local.secrets
 
   role_assignments = {
+    # Terraform identity needs write access to create secrets under RBAC
+    deployer_secrets_officer = {
+      role_definition_id_or_name = "Key Vault Secrets Officer"
+      principal_id               = data.azurerm_client_config.current.object_id
+    }
+    # AKS workload identity can read secrets at runtime
     workload_secrets_user = {
       role_definition_id_or_name = "Key Vault Secrets User"
       principal_id               = local.workload_principal
