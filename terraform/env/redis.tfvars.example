@@ -1,4 +1,8 @@
 # cp redis.tfvars.example redis.tfvars
 
-sku_name = ""
-capacity = 0
+# Azure Managed Redis (classic Cache for Redis / Premium P1 is blocked on this subscription)
+sku_name                   = "Balanced_B0"
+high_availability_enabled  = false
+
+# Resource itself is created in norwayeast (see infra/dbs/redis/main.tf) —
+# swedencentral returned InsufficientCapacity; Students policy blocks most other regions.

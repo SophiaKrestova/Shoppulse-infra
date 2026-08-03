@@ -1,8 +1,15 @@
 locals {
   resource_group_name = data.terraform_remote_state.base.outputs.resource_group_name
   location            = data.terraform_remote_state.base.outputs.resource_group_location
-  pe_subnet_id        = data.terraform_remote_state.network.outputs.subnet_ids["pe"].resource_id
+  postgres_subnet_id  = data.terraform_remote_state.network.outputs.subnet_ids["postgres"].resource_id
   vnet_id             = data.terraform_remote_state.network.outputs.virtual_network_id
+  key_vault_id        = data.terraform_remote_state.keyvault.outputs.key_vault_id
+}
+
+# Password generated in security/keyvault (random_password -> secret "postgres-password")
+data "azurerm_key_vault_secret" "postgres_password" {
+  name         = "postgres-password"
+  key_vault_id = local.key_vault_id
 }
 
 resource "azurerm_private_dns_zone" "postgresql" {
@@ -26,22 +33,22 @@ module "postgresql" {
   resource_group_name = local.resource_group_name
 
   administrator_login    = var.administrator_login
-  administrator_password = var.administrator_password
+  administrator_password = data.azurerm_key_vault_secret.postgres_password.value
 
   server_version = var.server_version
   sku_name       = var.sku_name
   storage_mb     = var.storage_mb
-  zone           = 1
+  zone           = "1"
 
   public_network_access_enabled = false
   high_availability             = null
 
-  private_endpoints = {
-    primary = {
-      subnet_resource_id            = local.pe_subnet_id
-      private_dns_zone_resource_ids = [azurerm_private_dns_zone.postgresql.id]
-    }
-  }
+  # VNet integration (not private endpoint)
+  delegated_subnet_id = local.postgres_subnet_id
+  private_dns_zone_id = azurerm_private_dns_zone.postgresql.id
+
+  backup_retention_days        = 7
+  geo_redundant_backup_enabled = false
 
   databases = {
     app = {

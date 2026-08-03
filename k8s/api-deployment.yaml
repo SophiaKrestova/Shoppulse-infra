@@ -24,7 +24,7 @@ spec:
           command: ["sh", "-c", "until pg_isready -h postgres -p 5432 -U shoppulse; do sleep 2; done"]
       containers:
         - name: api
-          image: shoppulseacr.azurecr.io/api:latest
+          image: shoppulseskacr01.azurecr.io/api:latest
           imagePullPolicy: IfNotPresent
           ports:
             - name: http

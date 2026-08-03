@@ -23,12 +23,9 @@ spec:
         - name: wait-postgres
           image: postgres:16-alpine
           command: ["sh", "-c", "until pg_isready -h postgres -p 5432 -U shoppulse; do sleep 2; done"]
-        - name: wait-servicebus
-          image: curlimages/curl:8.5.0
-          command: ["sh", "-c", "until curl -sf http://servicebus-emulator:8080/health; do sleep 5; done"]
       containers:
         - name: worker
-          image: shoppulseacr.azurecr.io/worker:latest
+          image: shoppulseskacr01.azurecr.io/worker:latest
           imagePullPolicy: IfNotPresent
           ports:
             - name: health

@@ -31,7 +31,11 @@ module "keyvault" {
 
   sku_name                       = "standard"
   legacy_access_policies_enabled = false
-  public_network_access_enabled  = false
+  public_network_access_enabled  = true
+  network_acls = {
+    bypass         = "AzureServices"
+    default_action = "Allow"
+  }
   purge_protection_enabled       = true
   soft_delete_retention_days     = 7
 

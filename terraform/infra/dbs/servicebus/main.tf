@@ -48,3 +48,10 @@ module "servicebus" {
     environment = var.environment
   }
 }
+
+# Real connection string into Key Vault (overwrites placeholder if any)
+resource "azurerm_key_vault_secret" "servicebus_connection_string" {
+  name         = "servicebus-connection-string"
+  value        = module.servicebus.resource.default_primary_connection_string
+  key_vault_id = data.terraform_remote_state.keyvault.outputs.key_vault_id
+}

@@ -15,17 +15,14 @@ This was a **time-boxed study exercise**, not a production deployment. AKS and a
 | Resource group | `terraform/infra/base` | Applied |
 | VNet, subnets, NSGs | `terraform/infra/network` | Applied |
 | User-assigned managed identity | `terraform/infra/security/identity` | Applied |
-| Azure Container Registry | `terraform/infra/security/acr` | Applied |
+| Azure Container Registry | `terraform/infra/security/acr` | Applied (`shoppulseskacr01`) |
+| Key Vault | `terraform/infra/security/keyvault` | Applied (`shoppulseskkv01`) |
+| PostgreSQL Flexible Server | `terraform/infra/dbs/postgresql` | Applied (`shoppulse-pgsql`) |
+| Service Bus Premium | `terraform/infra/dbs/servicebus` | Applied (`shoppulse-messaging`) |
+| Managed Redis | `terraform/infra/dbs/redis` | Applied (`shoppulse-redis`, norwayeast) |
 | AKS + Application Gateway Ingress Controller (AGIC) | `terraform/infra/aks` | Applied |
 
-### Not applied (code exists, out of scope for this iteration)
-
-| Stack | Path |
-|-------|------|
-| Azure Database for PostgreSQL | `terraform/infra/dbs/postgresql` |
-| Azure Cache for Redis | `terraform/infra/dbs/redis` |
-| Azure Service Bus | `terraform/infra/dbs/servicebus` |
-| Key Vault | `terraform/infra/security/keyvault` |
+Data-layer details, caveats (Redis SKU/region), CLI verification logs, and a full raise guide: see **[README-data.md](README-data.md)**.
 
 ### Kubernetes
 
@@ -92,53 +89,50 @@ These are honest notes for reviewers — not hidden failures.
 
 ---
 
-## Manual deployment steps (no helper scripts)
+## Manual deployment steps
 
 Assumes WSL, `az` CLI logged in, Docker, and `kubectl` installed (`az aks install-cli`).
 
-Copy local config from examples (never commit real `env/*.tfvars` or `k8s/secret.yaml`):
+**Full raise guide (all stacks, Redis caveats, CLI checks):** [README-data.md](README-data.md) — section *How to raise*.
+
+Short path:
 
 ```bash
 cd ~/STUDY/terraform/env
 cp common.tfvars.example common.tfvars
-cp postgresql.tfvars.example postgresql.tfvars
 cp acr.tfvars.example acr.tfvars
-cp servicebus.tfvars.example servicebus.tfvars
-cp redis.tfvars.example redis.tfvars
 cp keyvault.tfvars.example keyvault.tfvars
-# fill in values, then:
+cp postgresql.tfvars.example postgresql.tfvars
+cp redis.tfvars.example redis.tfvars
+cp servicebus.tfvars.example servicebus.tfvars
+# fill values; never commit real *.tfvars
 cp ~/STUDY/k8s/secret.yaml.example ~/STUDY/k8s/secret.yaml
-```
 
-### 1. Terraform
-
-```bash
 cd ~/STUDY/terraform
 bash scripts/link-env.sh
 
-cd infra/base && terraform init && terraform apply
-cd ../network && terraform init && terraform apply
-cd ../security/identity && terraform init && terraform apply
-cd ../acr && terraform init && terraform apply
-cd ../../aks && terraform init && terraform apply
+# order: base → network → security/identity → security/acr → security/keyvault
+#      → dbs/postgresql → dbs/servicebus → aks → dbs/redis
+bash scripts/tf.sh base init && bash scripts/tf.sh base apply
+# …repeat for each stack (see README-data.md)
 ```
 
-### 2. Container images → ACR
+### Images → ACR
 
 ```bash
-az acr update --name shoppulseacr --public-network-enabled true
-az acr login --name shoppulseacr
+az acr update -n shoppulseskacr01 --public-network-enabled true
+az acr login -n shoppulseskacr01
 
 cd ~/STUDY/repo/shoppulse
-docker build -t shoppulseacr.azurecr.io/api:latest ./api
-docker build -t shoppulseacr.azurecr.io/worker:latest ./worker
-docker build --build-arg VITE_API_BASE_URL= -t shoppulseacr.azurecr.io/front-end:latest ./frontend
-docker push shoppulseacr.azurecr.io/api:latest
-docker push shoppulseacr.azurecr.io/worker:latest
-docker push shoppulseacr.azurecr.io/front-end:latest
+docker build -t shoppulseskacr01.azurecr.io/api:latest ./api
+docker build -t shoppulseskacr01.azurecr.io/worker:latest ./worker
+docker build --build-arg VITE_API_BASE_URL= -t shoppulseskacr01.azurecr.io/front-end:latest ./frontend
+docker push shoppulseskacr01.azurecr.io/api:latest
+docker push shoppulseskacr01.azurecr.io/worker:latest
+docker push shoppulseskacr01.azurecr.io/front-end:latest
 ```
 
-### 3. Kubernetes
+### Kubernetes
 
 ```bash
 az aks get-credentials -g ShopPulse-ResGroup -n shoppulse-aks
@@ -152,7 +146,7 @@ kubectl annotate ingress shoppulse -n shoppulse appgw.ingress.azure.io/force-syn
 kubectl get ingress shoppulse -n shoppulse
 ```
 
-### 4. Verify
+### Verify
 
 ```bash
 kubectl get nodes
@@ -168,7 +162,8 @@ Open `http://<APPGW_IP>/` and submit a test event on **Submit Event**; refresh *
 
 ```
 STUDY/
-├── README.md           ← this file
+├── README.md           ← this file (overview + short deploy)
+├── README-data.md      ← data-layer notes + full raise guide
 ├── docs/screenshots/   ← demo images referenced in README
 ├── terraform/          ← Azure infra (split stacks + remote state)
 ├── k8s/                ← Kustomize manifests for ShopPulse on AKS
@@ -179,12 +174,11 @@ STUDY/
 
 ## Planned improvements (next iteration)
 
-- Apply Azure PostgreSQL, Redis, and Service Bus stacks; wire secrets from Terraform outputs or Key Vault.
-- Deploy `worker`; target **LIVE (cache)** dashboard.
+- Wire app fully to Azure Postgres / Managed Redis / Service Bus (drop in-cluster deps + emulator).
+- Deploy `worker`; prove SB E2E; target **LIVE (cache)** dashboard.
 - Scale node pool or use a larger VM SKU (e.g. `Standard_B4s_v2`).
 - Keep ACR private; push via CI or self-hosted runner inside the VNet.
 - Add App Gateway WAF policy and HTTPS listener.
-- Remove in-cluster Postgres/Redis once Azure PaaS is in place.
 
 ---
 

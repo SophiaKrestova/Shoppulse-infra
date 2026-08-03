@@ -21,7 +21,8 @@ spec:
       serviceAccountName: front-end
       containers:
         - name: front-end
-          image: shoppulseacr.azurecr.io/front-end:latest          imagePullPolicy: IfNotPresent
+          image: shoppulseskacr01.azurecr.io/front-end:latest
+          imagePullPolicy: IfNotPresent
           ports:
             - name: http
               containerPort: 80

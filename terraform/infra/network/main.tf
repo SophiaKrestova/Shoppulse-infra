@@ -29,5 +29,19 @@ module "virtual_network" {
         id = module.nsg_pe.resource_id
       }
     }
+    # Dedicated subnet for PostgreSQL Flexible Server (VNet integration)
+    postgres = {
+      name             = "postgres-subnet"
+      address_prefixes = ["10.0.10.0/24"]
+      network_security_group = {
+        id = module.nsg_pe.resource_id
+      }
+      delegation = [{
+        name = "pg-flex"
+        service_delegation = {
+          name = "Microsoft.DBforPostgreSQL/flexibleServers"
+        }
+      }]
+    }
   }
 }

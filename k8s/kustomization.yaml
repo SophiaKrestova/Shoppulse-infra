@@ -7,13 +7,16 @@ resources:
   - namespace.yaml
   - deps/postgres.yaml
   - deps/redis.yaml
-  - serviceaccounts.yaml  - secret.yaml
+  - serviceaccounts.yaml
+  - secret.yaml
   - api-deployment.yaml
   - api-service.yaml
   - front-end-deployment.yaml
   - front-end-service.yaml
+  - worker-deployment.yaml
   - ingress.yaml
 
-commonLabels:
-  app.kubernetes.io/part-of: shoppulse
-  app.kubernetes.io/managed-by: kustomize
+labels:
+  - pairs:
+      app.kubernetes.io/part-of: shoppulse
+      app.kubernetes.io/managed-by: kustomize

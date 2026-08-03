@@ -10,7 +10,7 @@ variable "service_accounts" {
   default = {
     api        = "backend API"
     worker     = "KEDA worker"
-    front-end  = "web UI"
+    "front-end" = "web UI"
   }
 }
 

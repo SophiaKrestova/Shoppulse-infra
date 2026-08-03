@@ -1,11 +1,10 @@
 variable "sku_name" {
   type        = string
-  description = "Basic | Standard | Premium"
-  default     = "Basic"
+  description = "Azure Managed Redis SKU (classic Premium P1 is unavailable on this subscription)"
+  default     = "Balanced_B0"
 }
 
-variable "capacity" {
-  type        = number
-  description = "Cache size (0 for Basic)"
-  default     = 0
+variable "high_availability_enabled" {
+  type    = bool
+  default = false
 }
